@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       if (ok) thumbnail = body.thumbnail;
     }
   } catch {
-    // No body is fine  count the identity without a face.
+    // No body is fine — count the identity without a face.
   }
 
   try {

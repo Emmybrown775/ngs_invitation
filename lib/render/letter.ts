@@ -73,7 +73,7 @@ export async function renderLetter(input: IdentityInput): Promise<string> {
     `builders, founders and creatives shaping what comes next.\n\n` +
     `${event.tagline} This invitation admits you to a full day of talks, ` +
     `workshops and conversations with the people building the future of our ` +
-    `industry  and to the room where those conversations keep going.\n\n` +
+    `industry — and to the room where those conversations keep going.\n\n` +
     `We look forward to welcoming you in ${event.city}.`;
 
   y = drawWrappedText(ctx, body, pad, y, col - w * 0.04, w * 0.042, {

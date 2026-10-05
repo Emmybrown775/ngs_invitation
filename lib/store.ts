@@ -61,7 +61,7 @@ export async function readFeed(): Promise<Feed> {
 }
 
 /**
- * Record one generated identity. `thumbnail` is optional  attendees who
+ * Record one generated identity. `thumbnail` is optional — attendees who
  * decline to appear on the wall still count toward the total.
  */
 export async function recordIdentity(thumbnail?: string): Promise<Feed> {

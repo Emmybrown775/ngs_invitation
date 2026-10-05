@@ -148,7 +148,7 @@ export function PhotoStudio({
             Add my face to the public attendee wall.
             <span className="mt-0.5 block text-white/40">
               Sends a 96px thumbnail. Your full photo always stays on your
-              device  every image is made right here in your browser.
+              device — every image is made right here in your browser.
             </span>
           </span>
         </label>

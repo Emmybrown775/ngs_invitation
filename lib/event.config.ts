@@ -13,13 +13,14 @@ export const event = {
   tagline: "Built for the next generation by the next generation.",
   bannerText: "Built for the next generation",
 
-  /* ---- TODO: confirm with the organisers before launch ---- */
-  /** ISO 8601 with timezone  drives the countdown. Must be in the future. */
+  /** ISO 8601 with timezone — drives the countdown. Must be in the future. */
   startsAt: "2026-10-10T09:00:00+01:00",
   dateLabel: "Sat, Oct. 10",
   timeLabel: "9AM – 5PM",
-  venue: "Breakfort Hotel and Suite, Uyo.",
-  /* -------------------------------------------------------- */
+  /** Full venue, for the letter. */
+  venue: "Breakfort Hotel and Suites, Uyo",
+  /** Short form, for the places where the full name will not fit. */
+  venueShort: "Breakfort Hotel, Uyo",
 
   city: "Uyo",
   cityLine: "See you in Uyo.",
@@ -46,7 +47,7 @@ export const event = {
  * globals.css) and the canvas renderers, which cannot read CSS.
  */
 export const brand = {
-  /** The brand is black-first  see the teaser and X banner. */
+  /** The brand is black-first — see the teaser and X banner. */
   ink: "#000000",
   base: "#050506",
   surface: "#0E1114",
@@ -83,11 +84,22 @@ export const glyphColors = [
   brand.cyan,
 ] as const;
 
+/**
+ * Event sponsors, shown in the site footer. Add more entries and they
+ * render automatically.
+ */
+export const sponsors = [
+  {
+    name: "Blockroll",
+    url: "https://x.com/ourblockroll",
+  },
+] as const;
+
 /** Asset paths under /public. Replace the files, keep the names. */
 export const assets = {
   /** Full horizontal lockup: glyph grid + "NEXT GEN 2 / SUMMIT 26". */
   logoLockup: "/brand/logo-lockup.png",
-  /** 2x2 glyph grid only  the square mark. */
+  /** 2x2 glyph grid only — the square mark. */
   logoGrid: "/brand/logo-grid.png",
   /** Single-row glyph mark. */
   logoRow: "/brand/logo-row.png",
@@ -98,7 +110,7 @@ export const assets = {
 /** Output sizes in px. */
 export const canvasSizes = {
   pfp: { w: 1080, h: 1080 },
-  card: { w: 1080, h: 1350 }, // 4:5  feed-optimal
+  card: { w: 1080, h: 1350 }, // 4:5 — feed-optimal
   letter: { w: 1240, h: 1754 }, // A4 at 150dpi
   story: { w: 1080, h: 1920 }, // 9:16
 } as const;

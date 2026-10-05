@@ -22,7 +22,7 @@ export function FacesWall({ refreshKey = 0 }: { refreshKey?: number }) {
         const res = await fetch("/api/frames/feed", { cache: "no-store" });
         if (res.ok && !cancelled) setFeed(await res.json());
       } catch {
-        // Offline or the store is down  keep the last good numbers.
+        // Offline or the store is down — keep the last good numbers.
       }
       if (!cancelled) {
         timer = setTimeout(tick, BASE_MS + Math.random() * JITTER_MS);

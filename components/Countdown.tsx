@@ -17,7 +17,7 @@ export function Countdown() {
    * The clock is an external, always-changing value, so it belongs in
    * useSyncExternalStore rather than an effect that calls setState. The
    * server snapshot is null, which is also what React uses for the
-   * hydration pass  so the markup matches and only then does the live
+   * hydration pass — so the markup matches and only then does the live
    * value take over.
    *
    * The snapshot must be a primitive: returning a fresh object every call

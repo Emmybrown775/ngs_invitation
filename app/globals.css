@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Brand tokens  mirrored from lib/event.config.ts, which the canvas
+ * Brand tokens — mirrored from lib/event.config.ts, which the canvas
  * renderers read. Edit both together.
  */
 :root {
@@ -48,7 +48,7 @@
   --font-mono: var(--font-mono);
 }
 
-/* The brand is black-first in every official asset  no light mode. */
+/* The brand is black-first in every official asset — no light mode. */
 html {
   color-scheme: dark;
   background: var(--ngs-ink);
@@ -65,7 +65,7 @@ body {
 /*
  * The page backdrop is drawn on a canvas by <PixelHorizon /> using the same
  * routine as the exported assets, so there is no CSS twin to keep in sync.
- * Nothing dims it  the glow is the brand. Copy that sits over the bright
+ * Nothing dims it — the glow is the brand. Copy that sits over the bright
  * band gets its own shadow instead.
  */
 .ngs-on-glow {

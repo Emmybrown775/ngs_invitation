@@ -103,11 +103,19 @@ export async function renderStory(input: IdentityInput): Promise<string> {
   ctx.fillRect(0, h * 0.78, w, h * 0.22);
 
   // Date / venue pill.
-  const pill = `${event.dateLabel.toUpperCase()}  ·  ${event.venue.toUpperCase()}`;
+  const pill = `${event.dateLabel.toUpperCase()}  ·  ${event.venueShort.toUpperCase()}`;
   ctx.save();
-  ctx.font = font("sans", 700, w * 0.028);
+  // Venue names vary a lot in length, so size the type to the pill rather
+  // than trusting one fixed value to fit.
+  const pillMax = w - pad * 2;
+  let pillSize = w * 0.028;
   ctx.letterSpacing = `${w * 0.005}px`;
-  const pillW = ctx.measureText(pill).width + w * 0.09;
+  ctx.font = font("sans", 700, pillSize);
+  while (ctx.measureText(pill).width + w * 0.09 > pillMax && pillSize > w * 0.016) {
+    pillSize -= 1;
+    ctx.font = font("sans", 700, pillSize);
+  }
+  const pillW = Math.min(pillMax, ctx.measureText(pill).width + w * 0.09);
   const pillH = w * 0.085;
   const pillY = h - pad * 2.1;
   roundRect(ctx, (w - pillW) / 2, pillY, pillW, pillH, pillH / 2);

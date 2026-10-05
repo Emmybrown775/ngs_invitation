@@ -6,7 +6,7 @@ import { drawPixelHorizon } from "@/lib/render/primitives";
 
 /**
  * The page backdrop, drawn with the very same routine the exported PNGs
- * use  so the site and the assets people download are the same artwork.
+ * use — so the site and the assets people download are the same artwork.
  */
 export function PixelHorizon() {
   const ref = useRef<HTMLCanvasElement>(null);

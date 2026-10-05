@@ -100,7 +100,7 @@ export async function shareIdentity(
 
 /**
  * A 96px circular WebP crop of the attendee's photo, for the public
- * "faces" wall. Deliberately tiny  it is the only pixel of the upload
+ * "faces" wall. Deliberately tiny — it is the only pixel of the upload
  * that ever leaves the device, and only when the attendee opts in.
  */
 export async function makeThumbnail(
@@ -121,7 +121,7 @@ export async function reportIdentity(thumbnail?: string): Promise<void> {
       body: JSON.stringify(thumbnail ? { thumbnail } : {}),
     });
   } catch (error) {
-    // The counter is decoration  never block the attendee on it.
+    // The counter is decoration — never block the attendee on it.
     console.warn("Could not report identity:", error);
   }
 }

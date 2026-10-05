@@ -1,6 +1,6 @@
 /**
  * Canvas drawing primitives shared by every asset renderer.
- * Everything here runs in the browser only  no uploaded photo ever
+ * Everything here runs in the browser only — no uploaded photo ever
  * leaves the device.
  */
 
@@ -394,7 +394,7 @@ export function drawGlyph(
   const u = size;
 
   if (glyph === "arch") {
-    // Semicircular top on a square base  the "N".
+    // Semicircular top on a square base — the "N".
     ctx.beginPath();
     ctx.moveTo(0, u);
     ctx.lineTo(0, u * 0.5);
@@ -406,7 +406,7 @@ export function drawGlyph(
     /*
      * Blocky G: rounded on the left, flat on the right, with the jaw slot
      * cut out of the right edge. The slot is a second subpath filled with
-     * the even-odd rule  `destination-out` would punch a hole through
+     * the even-odd rule — `destination-out` would punch a hole through
      * everything already on the canvas, not just this glyph.
      *
      * Canvas angles: -PI/2 is 12 o'clock and PI/2 is 6 o'clock, so sweeping
@@ -440,7 +440,7 @@ export function drawGlyph(
   } else {
     /*
      * S: two horizontal stadiums, top-left and bottom-right, forming a step.
-     * They must overlap *vertically* to merge  stacked flush at the
+     * They must overlap *vertically* to merge — stacked flush at the
      * midline each pill has tapered to its end cap there, so they meet at a
      * point and read as two separate blobs.
      */

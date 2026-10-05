@@ -4,6 +4,7 @@ import {
   drawFadedRule,
   drawGlyph,
   drawPixelHorizon,
+  font,
   loadImage,
 } from "./primitives";
 
@@ -57,7 +58,7 @@ export async function drawLockup(
 }
 
 /**
- * The four brand glyphs in a row  a compact signature for corners and
+ * The four brand glyphs in a row — a compact signature for corners and
  * footers where the full lockup would be too heavy.
  */
 export function drawGlyphRow(
@@ -100,18 +101,29 @@ export function drawFooterMeta(
   size: number,
 ): void {
   drawFadedRule(ctx, x, y - size * 1.6, w, brand.line);
+
+  const left = `${event.dateLabel.toUpperCase()}  ·  ${event.timeLabel}`;
+  const right = event.venueShort.toUpperCase();
+
   ctx.save();
-  ctx.font = `600 ${size}px ${
-    getComputedStyle(document.documentElement).getPropertyValue("--font-sans") ||
-    "sans-serif"
-  }`;
   ctx.letterSpacing = `${size * 0.06}px`;
-  ctx.fillStyle = brand.muted;
+  // Shrink until the two ends clear each other with a gap between them —
+  // venue and date strings are config, so their widths are not fixed.
+  let s = size;
+  const fits = () => {
+    ctx.font = font("sans", 600, s);
+    return (
+      ctx.measureText(left).width + ctx.measureText(right).width + size * 2 <= w
+    );
+  };
+  while (!fits() && s > size * 0.6) s -= 0.5;
+
   ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = brand.muted;
   ctx.textAlign = "left";
-  ctx.fillText(`${event.dateLabel.toUpperCase()}  ·  ${event.timeLabel}`, x, y);
+  ctx.fillText(left, x, y);
   ctx.textAlign = "right";
   ctx.fillStyle = brand.lime;
-  ctx.fillText(event.venue.toUpperCase(), x + w, y);
+  ctx.fillText(right, x + w, y);
   ctx.restore();
 }

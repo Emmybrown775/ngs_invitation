@@ -11,7 +11,7 @@ const SIZE = 360;
 
 /**
  * Live preview of the crop, drawn with the same `drawCover` maths the
- * exported assets use  so what the attendee frames here is exactly what
+ * exported assets use — so what the attendee frames here is exactly what
  * lands in the PNG. Drag to pan.
  */
 export function CropPreview({

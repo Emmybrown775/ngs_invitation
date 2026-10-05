@@ -17,7 +17,7 @@ import {
   drawLockup,
 } from "./common";
 
-/** The 4:5 "I'm attending" card  the primary share asset. */
+/** The 4:5 "I'm attending" card — the primary share asset. */
 export async function renderCard(input: IdentityInput): Promise<string> {
   await ensureFonts();
   const { w, h } = canvasSizes.card;
@@ -29,7 +29,7 @@ export async function renderCard(input: IdentityInput): Promise<string> {
   /*
    * Vertical rhythm is laid out top-down with explicit gaps. Each gap is
    * measured baseline-to-baseline, so it has to clear the cap height of the
-   * type that follows  hence the generous step before the headline.
+   * type that follows — hence the generous step before the headline.
    */
   const logoTop = pad * 0.85;
   const logoH = await drawLockup(ctx, w / 2, logoTop, w * 0.5);

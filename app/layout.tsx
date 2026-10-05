@@ -17,16 +17,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(event.siteUrl),
-  title: `${event.fullName}  Create Your Official Summit Identity`,
+  title: `${event.fullName} — Create Your Official Summit Identity`,
   description: `Upload your photo to create your official ${event.fullName} profile picture, attending card and invitation letter.`,
   openGraph: {
-    title: `${event.fullName}  Create Your Official Summit Identity`,
+    title: `${event.fullName} — Create Your Official Summit Identity`,
     description: event.tagline,
     images: ["/brand/banner.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${event.fullName}  Create Your Official Summit Identity`,
+    title: `${event.fullName} — Create Your Official Summit Identity`,
     description: event.tagline,
     images: ["/brand/banner.png"],
   },

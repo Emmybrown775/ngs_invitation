@@ -1,4 +1,4 @@
-# Next Gen Summit 26  Summit Identity Generator
+# Next Gen Summit 26 — Summit Identity Generator
 
 Attendees upload one photo and get four branded assets: an **attending card**,
 a **circular profile picture**, a **formal invitation letter** and a **story**
@@ -9,15 +9,15 @@ Modelled on the Solana Summit Nigeria PFP wrapper, rebuilt on the NGS brand.
 ## How it works
 
 Every image is composed **client-side on a `<canvas>`**. The uploaded photo
-never touches the server. The only thing that is ever sent  and only if the
-attendee ticks the box  is a 96px WebP thumbnail for the public "faces" wall.
+never touches the server. The only thing that is ever sent — and only if the
+attendee ticks the box — is a 96px WebP thumbnail for the public "faces" wall.
 
 ```
 app/
   page.tsx                  stage machine: landing -> studio -> generating -> result
   layout.tsx                fonts (Archivo + Geist Mono), metadata
   globals.css               brand tokens mirrored from lib/event.config.ts
-  api/frames/feed/          GET  -> { count, thumbnails[] }
+  api/frames/feed/          GET           -> { count, thumbnails[] }
   api/frames/increment/     POST -> records one identity (thumbnail optional)
 components/
   PixelHorizon.tsx          the page backdrop
@@ -42,7 +42,7 @@ dates, venue, copy, share text, registration URL, colours and output sizes.
 
 Two things to keep in step by hand:
 
-- **Colours** are declared twice  in `brand` (read by the canvas renderers,
+- **Colours** are declared twice — in `brand` (read by the canvas renderers,
   which cannot read CSS) and as `--ngs-*` custom properties in
   `app/globals.css` (read by the DOM). Edit both.
 - **`startsAt`** drives the countdown and must be a future ISO timestamp.
@@ -52,7 +52,7 @@ To swap the logo, replace the files in `public/brand/` keeping the same names.
 ## The pixel horizon
 
 The glow rising out of black is the brand's signature, and it is generated
-procedurally by `drawPixelHorizon` in `lib/render/primitives.ts`  no image
+procedurally by `drawPixelHorizon` in `lib/render/primitives.ts` — no image
 asset. The page backdrop and all four exports call that same function, so the
 site and the downloads are literally the same artwork.
 
@@ -81,11 +81,21 @@ minute per IP.
 
 Push to GitHub, import into Vercel, add the two Upstash variables, deploy.
 
-## Still to confirm with the organisers
+## Sponsors
 
-`lib/event.config.ts` carries placeholders for the details the brand kit did
-not include  they are marked with a `TODO` comment:
+Footer credits come from the `sponsors` array in `lib/event.config.ts`:
 
-- **`startsAt` / `dateLabel` / `timeLabel`**  currently Sat, Dec. 12 2026, 9AM–5PM
-- **`venue`**  currently just "Port Harcourt"; a specific venue would be better
-- **`registerUrl` / `siteUrl`**  currently `nextgensummit.com` placeholders
+```ts
+export const sponsors = [{ name: "Blockroll", url: "https://x.com/ourblockroll" }] as const;
+```
+
+Add entries and they render automatically, separated by dots. They appear on
+the site only, not on the generated images — say the word and they can go on
+the card and letter too.
+
+## A note on venue strings
+
+`venue` is the full name (used on the invitation letter); `venueShort` is for
+the card footer and the story pill, where a long name would collide with the
+date. Both the card footer and the story pill shrink their type to fit, so a
+longer name degrades gracefully rather than overflowing.

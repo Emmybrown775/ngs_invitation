@@ -6,7 +6,7 @@ import { Landing } from "@/components/Landing";
 import { PixelHorizon } from "@/components/PixelHorizon";
 import { PhotoStudio, type StudioValues } from "@/components/PhotoStudio";
 import { Result } from "@/components/Result";
-import { event } from "@/lib/event.config";
+import { event, sponsors } from "@/lib/event.config";
 import { type RenderedSet, identityTransform, renderAll } from "@/lib/render";
 import { makeThumbnail, reportIdentity } from "@/lib/share";
 
@@ -17,7 +17,7 @@ const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
 /**
  * Yield once so the loading state can paint before canvas work blocks the
  * main thread. Backgrounded tabs never fire requestAnimationFrame, so race
- * it against a timer  otherwise anyone who switches apps mid-generation
+ * it against a timer — otherwise anyone who switches apps mid-generation
  * comes back to a spinner that never resolves.
  */
 function nextPaint(): Promise<void> {
@@ -159,7 +159,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-5 py-12">
+      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-5 py-8 sm:py-12">
         {error && (
           <p
             role="alert"
@@ -194,13 +194,33 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="relative z-10 flex flex-col items-center gap-1 px-5 pb-8 text-center">
+      <footer className="relative z-10 flex flex-col items-center gap-2 px-5 pb-5 text-center sm:pb-8">
         <p className="ngs-on-glow text-xs font-semibold tracking-[0.14em] text-cream/80">
-          {event.dateLabel.toUpperCase()} &middot; {event.venue.toUpperCase()}
+          {event.dateLabel.toUpperCase()} &middot;{" "}
+          {event.venueShort.toUpperCase()}
         </p>
         <p className="ngs-on-glow text-[0.7rem] text-cream/55">
           {event.tagline}
         </p>
+
+        {sponsors.length > 0 && (
+          <p className="ngs-on-glow mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-cream/55">
+            <span>Sponsored by</span>
+            {sponsors.map((sponsor, i) => (
+              <span key={sponsor.name} className="flex items-center gap-2">
+                {i > 0 && <span aria-hidden className="text-cream/25">&middot;</span>}
+                <a
+                  href={sponsor.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-lime underline-offset-4 transition-opacity hover:underline hover:opacity-80"
+                >
+                  {sponsor.name}
+                </a>
+              </span>
+            ))}
+          </p>
+        )}
       </footer>
     </>
   );
