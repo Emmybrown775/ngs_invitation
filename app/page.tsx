@@ -1,69 +1,207 @@
-import Image from "next/image";
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Generating } from "@/components/Generating";
+import { Landing } from "@/components/Landing";
+import { PixelHorizon } from "@/components/PixelHorizon";
+import { PhotoStudio, type StudioValues } from "@/components/PhotoStudio";
+import { Result } from "@/components/Result";
+import { event } from "@/lib/event.config";
+import { type RenderedSet, identityTransform, renderAll } from "@/lib/render";
+import { makeThumbnail, reportIdentity } from "@/lib/share";
+
+type Stage = "landing" | "studio" | "generating" | "result";
+
+const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
+
+/**
+ * Yield once so the loading state can paint before canvas work blocks the
+ * main thread. Backgrounded tabs never fire requestAnimationFrame, so race
+ * it against a timer  otherwise anyone who switches apps mid-generation
+ * comes back to a spinner that never resolves.
+ */
+function nextPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      resolve();
+    };
+    requestAnimationFrame(finish);
+    setTimeout(finish, 50);
+  });
+}
+
+const emptyValues: StudioValues = {
+  name: "",
+  role: "",
+  transform: identityTransform,
+  shareFace: true,
+};
 
 export default function Home() {
+  const [stage, setStage] = useState<Stage>("landing");
+  const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
+  const [values, setValues] = useState<StudioValues>(emptyValues);
+  const [assets, setAssets] = useState<RenderedSet | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [feedKey, setFeedKey] = useState(0);
+
+  const fileRef = useRef<HTMLInputElement>(null);
+  const objectUrl = useRef<string | null>(null);
+
+  // Revoke the last object URL whenever it is replaced, and on unmount.
+  const setPhotoFromUrl = useCallback(async (url: string) => {
+    const img = new Image();
+    img.decoding = "async";
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("decode failed"));
+      img.src = url;
+    });
+    if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+    objectUrl.current = url;
+    setPhoto(img);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+    },
+    [],
+  );
+
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset so picking the same file twice still fires a change event.
+    e.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("That file isn’t an image. Try a JPG, PNG or HEIC photo.");
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError("That photo is over 12MB. Try a smaller one.");
+      return;
+    }
+
+    try {
+      await setPhotoFromUrl(URL.createObjectURL(file));
+      setError(null);
+      setStage("studio");
+    } catch {
+      setError("We couldn’t open that photo. Try a different one.");
+    }
+  };
+
+  const generate = async () => {
+    if (!photo) return;
+    setStage("generating");
+    setError(null);
+    try {
+      // Let the loader paint before the main thread goes busy on canvas work.
+      await nextPaint();
+      const set = await renderAll({
+        photo,
+        transform: values.transform,
+        name: values.name.trim(),
+        role: values.role.trim(),
+      });
+      setAssets(set);
+      setStage("result");
+
+      const thumb = values.shareFace
+        ? await makeThumbnail(photo, values.transform)
+        : undefined;
+      await reportIdentity(thumb);
+      setFeedKey((k) => k + 1);
+    } catch (err) {
+      console.error("render failed:", err);
+      setError("Something went wrong making your assets. Please try again.");
+      setStage("studio");
+    }
+  };
+
+  const restart = () => {
+    setAssets(null);
+    setValues(emptyValues);
+    setStage("landing");
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <>
+      <PixelHorizon />
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        onChange={onFile}
+        className="sr-only"
+      />
+
+      {/* Top banner */}
+      <header className="relative z-10 flex justify-center px-4 pt-5">
+        <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] py-1.5 pl-5 pr-1.5 backdrop-blur">
+          <span className="text-xs font-medium text-cream sm:text-sm">
+            {event.bannerText}
+          </span>
+          <a
+            href={event.registerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full bg-lime px-4 py-1.5 text-xs font-bold text-accent-ink transition-transform hover:scale-105"
+          >
+            Register
+          </a>
+        </div>
+      </header>
+
+      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-5 py-12">
+        {error && (
+          <p
+            role="alert"
+            className="mb-6 rounded-xl border border-magenta/40 bg-magenta/10 px-4 py-3 text-sm text-cream"
+          >
+            {error}
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        )}
+
+        {stage === "landing" && (
+          <Landing
+            refreshKey={feedKey}
+            onPick={() => fileRef.current?.click()}
+          />
+        )}
+
+        {stage === "studio" && photo && (
+          <PhotoStudio
+            photo={photo}
+            values={values}
+            onChange={setValues}
+            onBack={() => setStage("landing")}
+            onChangePhoto={() => fileRef.current?.click()}
+            onSubmit={generate}
+          />
+        )}
+
+        {stage === "generating" && <Generating />}
+
+        {stage === "result" && assets && (
+          <Result assets={assets} onRestart={restart} />
+        )}
       </main>
-    </div>
+
+      <footer className="relative z-10 flex flex-col items-center gap-1 px-5 pb-8 text-center">
+        <p className="ngs-on-glow text-xs font-semibold tracking-[0.14em] text-cream/80">
+          {event.dateLabel.toUpperCase()} &middot; {event.venue.toUpperCase()}
+        </p>
+        <p className="ngs-on-glow text-[0.7rem] text-cream/55">
+          {event.tagline}
+        </p>
+      </footer>
+    </>
   );
 }

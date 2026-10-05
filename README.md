@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next Gen Summit 26  Summit Identity Generator
 
-## Getting Started
+Attendees upload one photo and get four branded assets: an **attending card**,
+a **circular profile picture**, a **formal invitation letter** and a **story**
+image for WhatsApp/Instagram.
 
-First, run the development server:
+Modelled on the Solana Summit Nigeria PFP wrapper, rebuilt on the NGS brand.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## How it works
+
+Every image is composed **client-side on a `<canvas>`**. The uploaded photo
+never touches the server. The only thing that is ever sent  and only if the
+attendee ticks the box  is a 96px WebP thumbnail for the public "faces" wall.
+
+```
+app/
+  page.tsx                  stage machine: landing -> studio -> generating -> result
+  layout.tsx                fonts (Archivo + Geist Mono), metadata
+  globals.css               brand tokens mirrored from lib/event.config.ts
+  api/frames/feed/          GET  -> { count, thumbnails[] }
+  api/frames/increment/     POST -> records one identity (thumbnail optional)
+components/
+  PixelHorizon.tsx          the page backdrop
+  Landing.tsx  Countdown.tsx  FacesWall.tsx
+  PhotoStudio.tsx  CropPreview.tsx
+  Generating.tsx  Result.tsx
+lib/
+  event.config.ts           *** all event copy, dates, colours and asset paths ***
+  store.ts                  counter + faces persistence (Upstash, memory fallback)
+  share.ts                  download / Web Share / thumbnail
+  render/
+    primitives.ts           canvas helpers: cover-fit, curved text, glyphs, horizon
+    common.ts               shared backdrop, lockup, footer
+    card.ts  pfp.ts  letter.ts  story.ts
+public/brand/               the logo artwork from the brand kit
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Changing the event details
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Almost everything lives in [`lib/event.config.ts`](lib/event.config.ts):
+dates, venue, copy, share text, registration URL, colours and output sizes.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Two things to keep in step by hand:
 
-## Learn More
+- **Colours** are declared twice  in `brand` (read by the canvas renderers,
+  which cannot read CSS) and as `--ngs-*` custom properties in
+  `app/globals.css` (read by the DOM). Edit both.
+- **`startsAt`** drives the countdown and must be a future ISO timestamp.
 
-To learn more about Next.js, take a look at the following resources:
+To swap the logo, replace the files in `public/brand/` keeping the same names.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## The pixel horizon
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The glow rising out of black is the brand's signature, and it is generated
+procedurally by `drawPixelHorizon` in `lib/render/primitives.ts`  no image
+asset. The page backdrop and all four exports call that same function, so the
+site and the downloads are literally the same artwork.
 
-## Deploy on Vercel
+## Running it
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm install
+npm run dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Persistence
+
+The attendee counter and faces wall need a shared store, because serverless
+functions do not share memory between invocations.
+
+- **With `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`** (see
+  `.env.example`): numbers persist. This is what production needs.
+- **Without them**: an in-process fallback keeps everything working for
+  `npm run dev`, but the numbers reset whenever the server restarts.
+
+`/api/frames/increment` is public, so it caps thumbnails at 24KB, requires the
+exact `data:image/webp;base64,` prefix, and rate-limits to 8 requests per
+minute per IP.
+
+## Deploying
+
+Push to GitHub, import into Vercel, add the two Upstash variables, deploy.
+
+## Still to confirm with the organisers
+
+`lib/event.config.ts` carries placeholders for the details the brand kit did
+not include  they are marked with a `TODO` comment:
+
+- **`startsAt` / `dateLabel` / `timeLabel`**  currently Sat, Dec. 12 2026, 9AM–5PM
+- **`venue`**  currently just "Port Harcourt"; a specific venue would be better
+- **`registerUrl` / `siteUrl`**  currently `nextgensummit.com` placeholders
