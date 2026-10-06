@@ -1,4 +1,9 @@
-import { brand, canvasSizes, event } from "@/lib/event.config";
+import {
+  brand,
+  canvasSizes,
+  event,
+  participation,
+} from "@/lib/event.config";
 import {
   createCanvas,
   drawCoverInCircle,
@@ -49,12 +54,14 @@ export async function renderPfp(input: IdentityInput): Promise<string> {
 
   // Curved text: event name across the top arc, year across the bottom.
   const textR = outer - bandWidth / 2;
-  drawCurvedText(ctx, event.pfpRingText, cx, cy, textR, {
+  drawCurvedText(ctx, participation[input.participation].ringText, cx, cy, textR, {
     centerAngle: -Math.PI / 2,
     weight: 800,
     size: w * 0.046,
     color: brand.cream,
     letterSpacing: w * 0.004,
+    // Stop at the side glyphs: a little under a half-turn.
+    maxSweep: Math.PI * 0.82,
   });
   drawCurvedText(ctx, event.city.toUpperCase(), cx, cy, textR, {
     centerAngle: Math.PI / 2,
@@ -63,6 +70,7 @@ export async function renderPfp(input: IdentityInput): Promise<string> {
     color: brand.lime,
     letterSpacing: w * 0.012,
     flip: true,
+    maxSweep: Math.PI * 0.6,
   });
 
   // Brand glyphs at the two side gaps, separating the top and bottom text.

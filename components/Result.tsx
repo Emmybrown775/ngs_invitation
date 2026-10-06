@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import {
   type AssetKind,
+  type Participation,
   assetMeta,
   assetOrder,
   event,
@@ -13,9 +14,11 @@ import { downloadAll, downloadOne, shareIdentity } from "@/lib/share";
 
 export function Result({
   assets,
+  mode,
   onRestart,
 }: {
   assets: RenderedSet;
+  mode: Participation;
   onRestart: () => void;
 }) {
   const [active, setActive] = useState<AssetKind>("card");
@@ -91,7 +94,7 @@ export function Result({
           {saving ? "Saving…" : "Download all 4"}
         </button>
         <button
-          onClick={() => shareIdentity(assets, active)}
+          onClick={() => shareIdentity(assets, active, mode)}
           className="rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-cream transition-colors hover:border-white/35"
         >
           Share

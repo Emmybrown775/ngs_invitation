@@ -29,11 +29,6 @@ export const event = {
   siteUrl: "https://nextgensummit.xyz",
   hashtag: "#NextGenSummit",
 
-  shareText:
-    "I'm attending Next Gen Summit 26 in Uyo.\n\nCreate your official Summit identity 👇",
-
-  /** Curved text around the circular PFP badge. */
-  pfpRingText: "ATTENDING NEXT GEN SUMMIT 26",
   /** Headline printed on the attending card. */
   cardHeadline: "Meet me at",
 
@@ -88,12 +83,111 @@ export const glyphColors = [
  * Event sponsors, shown in the site footer. Add more entries and they
  * render automatically.
  */
-export const sponsors = [
+export type Sponsor = {
+  name: string;
+  url: string;
+  /** White-on-transparent PNG under /public/brand/sponsors. */
+  logo: string;
+  /**
+   * True when the file is a symbol with no wordmark, so there is no baseline
+   * to sit on. Those are centred on the type's x-height band instead.
+   */
+  markOnly?: boolean;
+  /**
+   * Typographic metrics of the artwork, as fractions of the file's height.
+   * Matching logos on bounding box alone looks wrong: a wordmark with a
+   * descender ends up with smaller letters than one without, and centring
+   * boxes leaves the baselines out of line. These let the strip scale on
+   * x-height and sit everything on a shared baseline.
+   *
+   * Measured from the files themselves \u2014 see `scripts/logo-metrics.py`.
+   */
+  xHeight: number;
+  baseline: number;
+};
+
+export const sponsors: readonly Sponsor[] = [
   {
     name: "Blockroll",
     url: "https://x.com/ourblockroll",
+    logo: "/brand/sponsors/blockroll.png",
+    xHeight: 0.529,
+    baseline: 0.851,
   },
-] as const;
+  {
+    name: "Talksign",
+    url: "",
+    logo: "/brand/sponsors/talksign.png",
+    xHeight: 0.534,
+    baseline: 0.772,
+  },
+  {
+    name: "Providum",
+    url: "",
+    logo: "/brand/sponsors/providum.png",
+    xHeight: 0.650,
+    baseline: 0.975,
+  },
+  {
+    name: "Trame",
+    url: "",
+    logo: "/brand/sponsors/trame.png",
+    xHeight: 0.581,
+    baseline: 0.846,
+  },
+  {
+    name: "Watchup",
+    url: "",
+    logo: "/brand/sponsors/watchup.png",
+    markOnly: true,
+    xHeight: 0.796,
+    baseline: 0.956,
+  },
+];
+
+/**
+ * People get one of two identities. Every string either mode changes lives
+ * here, so the renderers and the UI stay in step.
+ */
+export type Participation = "attending" | "volunteering";
+
+export const participation: Record<
+  Participation,
+  {
+    /** Toggle label in the studio. */
+    option: string;
+    /** The chip on the card and the big line on the story. */
+    statement: string;
+    /** Curved text around the profile picture. */
+    ringText: string;
+    /** Opening line of the invitation letter. */
+    letterOpening: string;
+    /** What the letter calls the document. */
+    letterKicker: string;
+    shareText: string;
+  }
+> = {
+  attending: {
+    option: "Attending",
+    statement: "I'M ATTENDING",
+    ringText: "ATTENDING NEXT GEN SUMMIT 26",
+    letterOpening:
+      "It is our pleasure to invite you to Next Gen Summit 26, a gathering of the builders, founders and creatives shaping what comes next.",
+    letterKicker: "OFFICIAL INVITATION",
+    shareText:
+      "I'm attending Next Gen Summit 26 in Uyo.\n\nCreate your official Summit identity \ud83d\udc47",
+  },
+  volunteering: {
+    option: "Volunteering",
+    statement: "I'M VOLUNTEERING",
+    ringText: "VOLUNTEERING AT NEXT GEN SUMMIT 26",
+    letterOpening:
+      "Thank you for volunteering at Next Gen Summit 26. You are part of the team making the day happen for everyone who walks through the door.",
+    letterKicker: "OFFICIAL VOLUNTEER PASS",
+    shareText:
+      "I'm volunteering at Next Gen Summit 26 in Uyo.\n\nCreate your official Summit identity \ud83d\udc47",
+  },
+};
 
 /** Asset paths under /public. Replace the files, keep the names. */
 export const assets = {

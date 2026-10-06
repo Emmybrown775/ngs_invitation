@@ -1,4 +1,9 @@
-import { brand, canvasSizes, event } from "@/lib/event.config";
+import {
+  brand,
+  canvasSizes,
+  event,
+  participation,
+} from "@/lib/event.config";
 import {
   createCanvas,
   drawCoverInRoundRect,
@@ -13,8 +18,8 @@ import {
   type IdentityInput,
   brandGradient,
   drawBackdrop,
-  drawGlyphRow,
   drawLockup,
+  drawSponsorStrip,
 } from "./common";
 
 /** 9:16 vertical for WhatsApp Status and Instagram Stories. */
@@ -81,12 +86,19 @@ export async function renderStory(input: IdentityInput): Promise<string> {
 
   // Statement.
   y += h * 0.085;
-  drawFittedText(ctx, "I'M ATTENDING", w / 2, y, w - pad * 2, {
-    weight: 900,
-    size: w * 0.085,
-    color: brand.cream,
-    letterSpacing: `${-w * 0.001}px`,
-  });
+  drawFittedText(
+    ctx,
+    participation[input.participation].statement,
+    w / 2,
+    y,
+    w - pad * 2,
+    {
+      weight: 900,
+      size: w * 0.085,
+      color: brand.cream,
+      letterSpacing: `${-w * 0.001}px`,
+    },
+  );
   y += h * 0.044;
   drawFittedText(ctx, "NEXT GEN SUMMIT 26", w / 2, y, w - pad * 1.5, {
     weight: 900,
@@ -117,7 +129,7 @@ export async function renderStory(input: IdentityInput): Promise<string> {
   }
   const pillW = Math.min(pillMax, ctx.measureText(pill).width + w * 0.09);
   const pillH = w * 0.085;
-  const pillY = h - pad * 2.1;
+  const pillY = h - pad * 3.0;
   roundRect(ctx, (w - pillW) / 2, pillY, pillW, pillH, pillH / 2);
   ctx.strokeStyle = brand.line;
   ctx.lineWidth = 2;
@@ -130,10 +142,13 @@ export async function renderStory(input: IdentityInput): Promise<string> {
   ctx.fillText(pill, w / 2, pillY + pillH / 2 + 1);
   ctx.restore();
 
-  // Glyph signature, centred at the very bottom.
-  const rowSize = w * 0.038;
-  const rowW = rowSize * 4 + rowSize * 0.34 * 3;
-  drawGlyphRow(ctx, (w - rowW) / 2, h - pad * 0.8, rowSize);
+  // Sponsor strip at the foot. It takes the place of a glyph row — the
+  // lockup at the top already carries the glyphs, and stacking both crowds
+  // the safe area that Stories crop into.
+  await drawSponsorStrip(ctx, w / 2, h - pad * 1.65, w - pad * 2, {
+    xHeight: w * 0.018,
+    labelSize: w * 0.017,
+  });
 
   return canvas.toDataURL("image/png");
 }

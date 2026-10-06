@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Generating } from "@/components/Generating";
 import { Landing } from "@/components/Landing";
@@ -38,6 +39,7 @@ const emptyValues: StudioValues = {
   role: "",
   transform: identityTransform,
   shareFace: true,
+  participation: "attending",
 };
 
 export default function Home() {
@@ -53,7 +55,8 @@ export default function Home() {
 
   // Revoke the last object URL whenever it is replaced, and on unmount.
   const setPhotoFromUrl = useCallback(async (url: string) => {
-    const img = new Image();
+    // `window.Image`, not `Image` \u2014 next/image shadows the DOM constructor.
+    const img = new window.Image();
     img.decoding = "async";
     await new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
@@ -108,6 +111,7 @@ export default function Home() {
         transform: values.transform,
         name: values.name.trim(),
         role: values.role.trim(),
+        participation: values.participation,
       });
       setAssets(set);
       setStage("result");
@@ -190,7 +194,11 @@ export default function Home() {
         {stage === "generating" && <Generating />}
 
         {stage === "result" && assets && (
-          <Result assets={assets} onRestart={restart} />
+          <Result
+            assets={assets}
+            mode={values.participation}
+            onRestart={restart}
+          />
         )}
       </main>
 
@@ -204,23 +212,57 @@ export default function Home() {
         </p>
 
         {sponsors.length > 0 && (
-          <p className="ngs-on-glow mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-cream/55">
-            <span>Sponsored by</span>
-            {sponsors.map((sponsor, i) => (
-              <span key={sponsor.name} className="flex items-center gap-2">
-                {i > 0 && <span aria-hidden className="text-cream/25">&middot;</span>}
-                <a
-                  href={sponsor.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold text-lime underline-offset-4 transition-opacity hover:underline hover:opacity-80"
-                >
-                  {sponsor.name}
-                </a>
-              </span>
-            ))}
-          </p>
+          <div className="mt-3 flex flex-col items-center gap-2">
+            <p className="ngs-on-glow text-[0.65rem] font-semibold tracking-[0.22em] text-cream/45">
+              SPONSORED BY
+            </p>
+            <ul className="flex flex-wrap items-end justify-center gap-x-6 gap-y-3">
+              {sponsors.map((sponsor) => {
+                /*
+                 * Same alignment rules as the generated assets: scale every
+                 * logo to a shared x-height, then hang whatever sits below
+                 * the baseline (a descender, or a mark that overshoots the
+                 * type) beneath the row with a negative bottom margin, so
+                 * the baselines line up rather than the box bottoms.
+                 */
+                const X = 11;
+                const height = sponsor.markOnly
+                  ? X * 1.8
+                  : X / sponsor.xHeight;
+                const overhang = sponsor.markOnly
+                  ? (height - X) / 2
+                  : (1 - sponsor.baseline) * height;
+                const logo = (
+                  <Image
+                    src={sponsor.logo}
+                    alt={sponsor.name}
+                    width={320}
+                    height={80}
+                    style={{ height, marginBottom: -overhang }}
+                    className="w-auto opacity-75 transition-opacity hover:opacity-100"
+                  />
+                );
+                return (
+                  <li key={sponsor.name} className="flex items-end">
+                    {sponsor.url ? (
+                      <a
+                        href={sponsor.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={sponsor.name}
+                      >
+                        {logo}
+                      </a>
+                    ) : (
+                      logo
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
+
       </footer>
     </>
   );

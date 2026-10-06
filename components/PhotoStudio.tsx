@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { event } from "@/lib/event.config";
+import {
+  type Participation,
+  event,
+  participation,
+} from "@/lib/event.config";
 import type { Transform } from "@/lib/render/primitives";
 import { CropPreview } from "./CropPreview";
 
@@ -10,6 +14,7 @@ export type StudioValues = {
   role: string;
   transform: Transform;
   shareFace: boolean;
+  participation: Participation;
 };
 
 export function PhotoStudio({
@@ -95,6 +100,32 @@ export function PhotoStudio({
       </div>
 
       <div className="mt-8 space-y-5">
+        <fieldset>
+          <legend className="mb-2 block text-xs font-semibold tracking-[0.18em] text-muted">
+            I&rsquo;M JOINING AS
+          </legend>
+          <div className="grid grid-cols-2 gap-2 rounded-full border border-white/10 bg-white/[0.03] p-1">
+            {(Object.keys(participation) as Participation[]).map((key) => {
+              const active = values.participation === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => set("participation", key)}
+                  className={`rounded-full px-4 py-2.5 text-sm font-semibold transition-colors ${
+                    active
+                      ? "bg-lime text-accent-ink"
+                      : "text-muted hover:text-cream"
+                  }`}
+                >
+                  {participation[key].option}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+
         <div>
           <label
             htmlFor="ngs-name"

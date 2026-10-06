@@ -1,4 +1,10 @@
-import { type AssetKind, assetMeta, event } from "@/lib/event.config";
+import {
+  type AssetKind,
+  type Participation,
+  assetMeta,
+  event,
+  participation,
+} from "@/lib/event.config";
 import type { RenderedSet } from "@/lib/render";
 import { createCanvas, drawCoverInCircle } from "@/lib/render/primitives";
 import type { Transform } from "@/lib/render/primitives";
@@ -74,14 +80,16 @@ function canShareFiles(files: File[]): boolean {
 export async function shareIdentity(
   assets: RenderedSet,
   kind: AssetKind = "card",
+  mode: Participation = "attending",
 ): Promise<"native" | "intent"> {
   const file = dataUrlToFile(assets[kind], assetMeta[kind].filename);
+  const shareText = participation[mode].shareText;
 
   if (isTouchDevice() && canShareFiles([file])) {
     try {
       await navigator.share({
         files: [file],
-        text: `${event.shareText}\n${event.siteUrl}`,
+        text: `${shareText}\n${event.siteUrl}`,
       });
       return "native";
     } catch (error) {
@@ -91,7 +99,7 @@ export async function shareIdentity(
   }
 
   const intent = new URL("https://x.com/intent/tweet");
-  intent.searchParams.set("text", event.shareText);
+  intent.searchParams.set("text", shareText);
   intent.searchParams.set("url", event.siteUrl);
   window.open(intent.toString(), "_blank", "noopener,noreferrer");
   downloadOne(assets, kind);

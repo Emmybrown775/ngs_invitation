@@ -1,4 +1,9 @@
-import { brand, canvasSizes, event } from "@/lib/event.config";
+import {
+  brand,
+  canvasSizes,
+  event,
+  participation,
+} from "@/lib/event.config";
 import {
   createCanvas,
   drawCoverInCircle,
@@ -14,6 +19,7 @@ import {
   drawBackdrop,
   drawGlyphRow,
   drawLockup,
+  drawSponsorStrip,
 } from "./common";
 
 /** Formal A4 invitation letter, addressed to the attendee by name. */
@@ -37,12 +43,19 @@ export async function renderLetter(input: IdentityInput): Promise<string> {
   const logoH = await drawLockup(ctx, w / 2, pad * 0.72, w * 0.46);
   let y = pad * 0.72 + logoH + h * 0.045;
 
-  drawFittedText(ctx, "OFFICIAL INVITATION", w / 2, y, col, {
-    weight: 700,
-    size: w * 0.019,
-    color: brand.lime,
-    letterSpacing: `${w * 0.009}px`,
-  });
+  drawFittedText(
+    ctx,
+    participation[input.participation].letterKicker,
+    w / 2,
+    y,
+    col,
+    {
+      weight: 700,
+      size: w * 0.019,
+      color: brand.lime,
+      letterSpacing: `${w * 0.009}px`,
+    },
+  );
 
   y += h * 0.022;
   drawFadedRule(ctx, pad, y, col, brand.line);
@@ -68,12 +81,12 @@ export async function renderLetter(input: IdentityInput): Promise<string> {
 
   // Body.
   y += h * 0.05;
+  const mode = participation[input.participation];
   const body =
-    `It is our pleasure to invite you to ${event.fullName}, a gathering of the ` +
-    `builders, founders and creatives shaping what comes next.\n\n` +
-    `${event.tagline} This invitation admits you to a full day of talks, ` +
+    `${mode.letterOpening}\n\n` +
+    `${event.tagline} This pass admits you to a full day of talks, ` +
     `workshops and conversations with the people building the future of our ` +
-    `industry — and to the room where those conversations keep going.\n\n` +
+    `industry \u2014 and to the room where those conversations keep going.\n\n` +
     `We look forward to welcoming you in ${event.city}.`;
 
   y = drawWrappedText(ctx, body, pad, y, col - w * 0.04, w * 0.042, {
@@ -154,6 +167,14 @@ export async function renderLetter(input: IdentityInput): Promise<string> {
       color: brand.cream,
       align: "left",
     });
+  });
+
+  // Sponsor strip, in the open band between the details and the sign-off.
+  const sponsorTop = detailY + h * 0.07;
+  drawFadedRule(ctx, pad + col * 0.3, sponsorTop - h * 0.022, col * 0.4, brand.line);
+  await drawSponsorStrip(ctx, w / 2, sponsorTop, col * 0.92, {
+    xHeight: w * 0.017,
+    labelSize: w * 0.015,
   });
 
   // Sign-off.

@@ -1,4 +1,9 @@
-import { brand, canvasSizes, event } from "@/lib/event.config";
+import {
+  brand,
+  canvasSizes,
+  event,
+  participation,
+} from "@/lib/event.config";
 import {
   createCanvas,
   drawCoverInRoundRect,
@@ -15,6 +20,7 @@ import {
   drawBackdrop,
   drawFooterMeta,
   drawLockup,
+  drawSponsorStrip,
 } from "./common";
 
 /** The 4:5 "I'm attending" card — the primary share asset. */
@@ -58,7 +64,7 @@ export async function renderCard(input: IdentityInput): Promise<string> {
   });
 
   // Portrait.
-  const photoSize = w * 0.5;
+  const photoSize = w * 0.44;
   const photoX = (w - photoSize) / 2;
   const photoY = headlineY + h * 0.032;
   const radius = photoSize * 0.14;
@@ -91,7 +97,7 @@ export async function renderCard(input: IdentityInput): Promise<string> {
 
   // Name + role.
   const hasRole = Boolean(input.role.trim());
-  let y = photoY + photoSize + h * 0.068;
+  let y = photoY + photoSize + h * 0.062;
   drawFittedText(ctx, input.name, w / 2, y, w - pad * 2, {
     weight: 800,
     size: w * 0.06,
@@ -100,7 +106,7 @@ export async function renderCard(input: IdentityInput): Promise<string> {
   });
 
   if (hasRole) {
-    y += h * 0.033;
+    y += h * 0.031;
     drawFittedText(ctx, input.role, w / 2, y, w - pad * 2.4, {
       weight: 500,
       size: w * 0.029,
@@ -110,9 +116,9 @@ export async function renderCard(input: IdentityInput): Promise<string> {
   }
 
   // "I'M ATTENDING" chip.
-  const chipLabel = "I'M ATTENDING";
-  const chipH = w * 0.064;
-  const chipY = y + h * 0.028;
+  const chipLabel = participation[input.participation].statement;
+  const chipH = w * 0.062;
+  const chipY = y + h * 0.024;
   ctx.save();
   ctx.font = font("sans", 800, w * 0.025);
   ctx.letterSpacing = `${w * 0.008}px`;
@@ -133,8 +139,12 @@ export async function renderCard(input: IdentityInput): Promise<string> {
   ctx.fillStyle = vig;
   ctx.fillRect(0, h * 0.8, w, h * 0.2);
 
-  // Footer meta. The lockup already carries the glyphs, so no second mark.
-  drawFooterMeta(ctx, pad, h - pad * 0.72, w - pad * 2, w * 0.021);
+  // Footer meta, then the sponsor strip across the bottom.
+  drawFooterMeta(ctx, pad, chipY + chipH + h * 0.041, w - pad * 2, w * 0.021);
+  await drawSponsorStrip(ctx, w / 2, h - pad * 1.55, w - pad * 2, {
+    xHeight: w * 0.019,
+    labelSize: w * 0.017,
+  });
 
   return canvas.toDataURL("image/png");
 }

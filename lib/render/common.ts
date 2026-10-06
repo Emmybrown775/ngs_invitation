@@ -1,4 +1,10 @@
-import { assets, brand, event } from "@/lib/event.config";
+import {
+  type Participation,
+  assets,
+  brand,
+  event,
+  sponsors,
+} from "@/lib/event.config";
 import {
   type Transform,
   drawFadedRule,
@@ -15,6 +21,8 @@ export type IdentityInput = {
   transform: Transform;
   name: string;
   role: string;
+  /** Attending or volunteering \u2014 drives the wording on every asset. */
+  participation: Participation;
 };
 
 /** The logo lockup is a PNG; cache the decode across all four renders. */
@@ -126,4 +134,109 @@ export function drawFooterMeta(
   ctx.fillStyle = brand.lime;
   ctx.fillText(right, x + w, y);
   ctx.restore();
+}
+
+/** Sponsor logos are PNGs; cache the decodes across all four renders. */
+const sponsorLogos = new Map<string, Promise<HTMLImageElement>>();
+function loadSponsorLogo(src: string): Promise<HTMLImageElement> {
+  let p = sponsorLogos.get(src);
+  if (!p) {
+    p = loadImage(src);
+    sponsorLogos.set(src, p);
+  }
+  return p;
+}
+
+/** Decode every sponsor logo once, up front. */
+export async function preloadSponsorLogos(): Promise<void> {
+  await Promise.all(
+    sponsors.map((s) => loadSponsorLogo(s.logo).catch(() => null)),
+  );
+}
+
+/**
+ * A row of sponsor logos, centred, under a small "SPONSORED BY" label.
+ *
+ * Alignment is the whole job here. Matching logos on bounding-box height
+ * looks wrong, because a box contains different things for each file: one
+ * wordmark has a descender, another has none, and two of them carry symbols
+ * that overshoot the type. So instead each logo is scaled to a common
+ * **x-height** and sat on a shared **baseline**, using metrics measured from
+ * the artwork. Symbols have no baseline, so they are centred on the x-height
+ * band instead.
+ *
+ * The row is then scaled down as a whole until it fits `maxWidth`, which
+ * keeps the relative weighting intact whatever the container.
+ *
+ * Returns the total height drawn, so callers can lay out above it.
+ */
+export async function drawSponsorStrip(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  top: number,
+  maxWidth: number,
+  opts: { xHeight: number; labelSize: number; gap?: number },
+): Promise<number> {
+  if (sponsors.length === 0) return 0;
+
+  const label = "SPONSORED BY";
+  const labelGap = opts.labelSize * 1.5;
+  const gap = opts.gap ?? opts.xHeight * 2.2;
+  /** How tall a symbol stands relative to the type's x-height. */
+  const SYMBOL_SCALE = 1.8;
+
+  const loaded = await Promise.all(
+    sponsors.map(async (sponsor) => {
+      try {
+        return { sponsor, img: await loadSponsorLogo(sponsor.logo) };
+      } catch {
+        return null; // a missing file must not take the whole asset down
+      }
+    }),
+  );
+  const items = loaded.filter((x): x is NonNullable<typeof x> => x !== null);
+  if (items.length === 0) return 0;
+
+  const sized = items.map(({ sponsor, img }) => {
+    const h = sponsor.markOnly
+      ? opts.xHeight * SYMBOL_SCALE
+      : opts.xHeight / sponsor.xHeight;
+    const w = (img.width / img.height) * h;
+    // Distance from the top of the drawn logo down to the shared baseline.
+    const toBaseline = sponsor.markOnly
+      ? h / 2 + opts.xHeight / 2 // centre the symbol on the x-height band
+      : sponsor.baseline * h;
+    return { img, w, h, toBaseline };
+  });
+
+  const naturalW =
+    sized.reduce((sum, s) => sum + s.w, 0) + gap * (sized.length - 1);
+  const scale = Math.min(1, maxWidth / naturalW);
+  const rowW = naturalW * scale;
+
+  // The band has to clear whatever rises highest above the baseline and
+  // whatever hangs lowest below it.
+  const above = Math.max(...sized.map((s) => s.toBaseline)) * scale;
+  const below = Math.max(...sized.map((s) => s.h - s.toBaseline)) * scale;
+  const rowH = above + below;
+
+  ctx.save();
+  ctx.font = font("sans", 600, opts.labelSize);
+  ctx.letterSpacing = `${opts.labelSize * 0.22}px`;
+  ctx.fillStyle = brand.muted;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText(label, cx, top + opts.labelSize);
+  ctx.restore();
+
+  const baselineY = top + opts.labelSize + labelGap + above;
+  let x = cx - rowW / 2;
+  for (const item of sized) {
+    const w = item.w * scale;
+    const h = item.h * scale;
+    ctx.drawImage(item.img, x, baselineY - item.toBaseline * scale, w, h);
+    x += w + gap * scale;
+  }
+
+  return opts.labelSize + labelGap + rowH;
 }

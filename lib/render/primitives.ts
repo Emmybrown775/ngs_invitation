@@ -250,18 +250,43 @@ export function drawCurvedText(
     color?: string;
     letterSpacing?: number;
     flip?: boolean;
+    /** Largest arc the text may span, in radians. */
+    maxSweep?: number;
   },
 ): void {
   ctx.save();
-  ctx.font = font(opts.which ?? "sans", opts.weight ?? 600, opts.size);
+  const which = opts.which ?? "sans";
+  const weight = opts.weight ?? 600;
+  let size = opts.size;
+  let extra = opts.letterSpacing ?? 0;
+  ctx.font = font(which, weight, size);
+
+  const measure = () => {
+    const chars = [...text];
+    const widths = chars.map((c) => ctx.measureText(c).width + extra);
+    return { chars, widths, total: widths.reduce((a, b) => a + b, 0) };
+  };
+
+  /*
+   * Longer strings sweep further around the ring and run into whatever sits
+   * at the sides. Shrink until the sweep fits the allowance, so a short
+   * label and a long one both sit inside the same arc.
+   */
+  let m = measure();
+  if (opts.maxSweep) {
+    const minSize = opts.size * 0.6;
+    while (m.total / radius > opts.maxSweep && size > minSize) {
+      size -= 0.5;
+      extra = (opts.letterSpacing ?? 0) * (size / opts.size);
+      ctx.font = font(which, weight, size);
+      m = measure();
+    }
+  }
+
   ctx.fillStyle = opts.color ?? brand.cream;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-
-  const extra = opts.letterSpacing ?? 0;
-  const chars = [...text];
-  const widths = chars.map((c) => ctx.measureText(c).width + extra);
-  const total = widths.reduce((a, b) => a + b, 0);
+  const { chars, widths, total } = m;
   // Arc length -> angle. Flipped text reads clockwise in the other direction.
   const dir = opts.flip ? -1 : 1;
   let angle = opts.centerAngle - (dir * total) / (2 * radius);
