@@ -3,6 +3,7 @@ import {
   assets,
   brand,
   event,
+  sponsorBox,
   sponsors,
 } from "@/lib/event.config";
 import {
@@ -181,9 +182,7 @@ export async function drawSponsorStrip(
 
   const label = "SPONSORED BY";
   const labelGap = opts.labelSize * 1.5;
-  const gap = opts.gap ?? opts.xHeight * 2.2;
-  /** How tall a symbol stands relative to the type's x-height. */
-  const SYMBOL_SCALE = 1.8;
+  const gap = opts.gap ?? opts.xHeight * 1.7;
 
   const loaded = await Promise.all(
     sponsors.map(async (sponsor) => {
@@ -198,15 +197,13 @@ export async function drawSponsorStrip(
   if (items.length === 0) return 0;
 
   const sized = items.map(({ sponsor, img }) => {
-    const h = sponsor.markOnly
-      ? opts.xHeight * SYMBOL_SCALE
-      : opts.xHeight / sponsor.xHeight;
-    const w = (img.width / img.height) * h;
-    // Distance from the top of the drawn logo down to the shared baseline.
-    const toBaseline = sponsor.markOnly
-      ? h / 2 + opts.xHeight / 2 // centre the symbol on the x-height band
-      : sponsor.baseline * h;
-    return { img, w, h, toBaseline };
+    const { height, toBaseline } = sponsorBox(sponsor, opts.xHeight);
+    return {
+      img,
+      h: height,
+      w: (img.width / img.height) * height,
+      toBaseline,
+    };
   });
 
   const naturalW =

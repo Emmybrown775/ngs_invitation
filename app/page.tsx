@@ -7,7 +7,7 @@ import { Landing } from "@/components/Landing";
 import { PixelHorizon } from "@/components/PixelHorizon";
 import { PhotoStudio, type StudioValues } from "@/components/PhotoStudio";
 import { Result } from "@/components/Result";
-import { event, sponsors } from "@/lib/event.config";
+import { event, sponsorBox, sponsors } from "@/lib/event.config";
 import { type RenderedSet, identityTransform, renderAll } from "@/lib/render";
 import { makeThumbnail, reportIdentity } from "@/lib/share";
 
@@ -219,19 +219,15 @@ export default function Home() {
             <ul className="flex flex-wrap items-end justify-center gap-x-6 gap-y-3">
               {sponsors.map((sponsor) => {
                 /*
-                 * Same alignment rules as the generated assets: scale every
-                 * logo to a shared x-height, then hang whatever sits below
-                 * the baseline (a descender, or a mark that overshoots the
-                 * type) beneath the row with a negative bottom margin, so
+                 * Same layout call as the generated assets, so the site and
+                 * the downloads agree. Whatever sits below the shared
+                 * baseline - a descender, or a mark that overshoots the type
+                 * - hangs beneath the row via a negative bottom margin, so
                  * the baselines line up rather than the box bottoms.
                  */
                 const X = 11;
-                const height = sponsor.markOnly
-                  ? X * 1.8
-                  : X / sponsor.xHeight;
-                const overhang = sponsor.markOnly
-                  ? (height - X) / 2
-                  : (1 - sponsor.baseline) * height;
+                const { height, toBaseline } = sponsorBox(sponsor, X);
+                const overhang = height - toBaseline;
                 const logo = (
                   <Image
                     src={sponsor.logo}

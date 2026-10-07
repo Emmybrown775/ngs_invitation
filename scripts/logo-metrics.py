@@ -115,7 +115,14 @@ def main():
     print("    baseline: %.3f," % baseline)
     print("  },")
     print()
-    print("If the file is a symbol with no wordmark, add `markOnly: true`.")
+    print("That form assumes a SINGLE LINE of type.")
+    print("If the logo is a bare symbol, or a stacked lockup with more than")
+    print("one line, drop xHeight/baseline (they mean nothing in that case -")
+    print("the measured band spans both lines) and use instead:")
+    print()
+    print("    align: \"block\",")
+    print("    blockScale: 2.35,   // omit for a symbol; raise it for a stack")
+    print()
     print("Check the result on black before shipping - white artwork is assumed.")
 
 

@@ -83,28 +83,48 @@ export const glyphColors = [
  * Event sponsors, shown in the site footer. Add more entries and they
  * render automatically.
  */
-export type Sponsor = {
+/**
+ * How a logo is fitted into the sponsor row.
+ *
+ * - `baseline` (the default): a single-line wordmark. Scaled to a common
+ *   x-height and sat on a shared baseline, so descenders and marks that
+ *   overshoot the type hang below it.
+ * - `block`: a symbol, or a stacked lockup with more than one line of type.
+ *   Neither has a single baseline to sit on, so it is sized as a block and
+ *   centred on the x-height band instead.
+ */
+export type SponsorAlign = "baseline" | "block";
+
+type SponsorBase = {
   name: string;
   url: string;
   /** White-on-transparent PNG under /public/brand/sponsors. */
   logo: string;
-  /**
-   * True when the file is a symbol with no wordmark, so there is no baseline
-   * to sit on. Those are centred on the type's x-height band instead.
-   */
-  markOnly?: boolean;
-  /**
-   * Typographic metrics of the artwork, as fractions of the file's height.
-   * Matching logos on bounding box alone looks wrong: a wordmark with a
-   * descender ends up with smaller letters than one without, and centring
-   * boxes leaves the baselines out of line. These let the strip scale on
-   * x-height and sit everything on a shared baseline.
-   *
-   * Measured from the files themselves \u2014 see `scripts/logo-metrics.py`.
-   */
-  xHeight: number;
-  baseline: number;
 };
+
+/**
+ * Logos cannot be matched on bounding box alone: a box holds something
+ * different for every file \u2014 one wordmark has a descender, another has
+ * none, and some carry marks that overshoot their own type. `xHeight` and
+ * `baseline` (fractions of the file's height) are what let the row scale on
+ * x-height and share a baseline. They are measured from the artwork by
+ * `scripts/logo-metrics.py`, and only mean anything for a single line of
+ * type \u2014 hence the union.
+ */
+export type Sponsor = SponsorBase &
+  (
+    | { align?: "baseline"; xHeight: number; baseline: number }
+    | {
+        align: "block";
+        /**
+         * Block height as a multiple of the row's x-height. Defaults to
+         * `SPONSOR_BLOCK_SCALE`. A stacked lockup needs more than a single
+         * symbol does, or each of its two lines of type ends up around half
+         * the size of the neighbouring wordmarks.
+         */
+        blockScale?: number;
+      }
+  );
 
 export const sponsors: readonly Sponsor[] = [
   {
@@ -136,14 +156,45 @@ export const sponsors: readonly Sponsor[] = [
     baseline: 0.846,
   },
   {
+    // Stacked lockup: "PXXL" over "APP" beside the planet mark.
+    name: "PXXL App",
+    url: "",
+    logo: "/brand/sponsors/pxxl.png",
+    align: "block",
+    blockScale: 2.35,
+  },
+  {
+    // Symbol only: the owl.
     name: "Watchup",
     url: "",
     logo: "/brand/sponsors/watchup.png",
-    markOnly: true,
-    xHeight: 0.796,
-    baseline: 0.956,
+    align: "block",
   },
 ];
+
+/** How tall a block-aligned logo stands, relative to the type's x-height. */
+export const SPONSOR_BLOCK_SCALE = 1.8;
+
+/**
+ * Lay out one sponsor logo against a target x-height.
+ *
+ * Returns the drawn height and the distance from the top of the logo down to
+ * the row's shared baseline, which is all either renderer needs. Both the
+ * canvas strip and the DOM footer call this, so the site and the generated
+ * images cannot drift apart.
+ */
+export function sponsorBox(
+  sponsor: Sponsor,
+  xHeight: number,
+): { height: number; toBaseline: number } {
+  if (sponsor.align === "block") {
+    const height = xHeight * (sponsor.blockScale ?? SPONSOR_BLOCK_SCALE);
+    // No baseline of its own, so centre it on the x-height band.
+    return { height, toBaseline: height / 2 + xHeight / 2 };
+  }
+  const height = xHeight / sponsor.xHeight;
+  return { height, toBaseline: sponsor.baseline * height };
+}
 
 /**
  * People get one of two identities. Every string either mode changes lives

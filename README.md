@@ -94,38 +94,55 @@ To add one, run the prep script and paste what it prints:
 python3 scripts/logo-metrics.py ~/Downloads/acme-logo.png acme
 ```
 
-It writes a white-on-transparent PNG into `public/brand/sponsors/` (the assets
-are black-first, so white artwork is what reads) and prints the entry:
+It auto-detects whether the artwork sits on transparency, on white or on
+black, keys it to a white-on-transparent PNG in `public/brand/sponsors/` (the
+assets are black-first, so white artwork is what reads), trims it, and prints
+the config entry.
 
-```ts
-{
-  name: "Acme",
-  url: "",                               // optional; no url renders as a plain logo
-  logo: "/brand/sponsors/acme.png",
-  markOnly: true,                        // only if the file has no wordmark
-  xHeight: 0.534,
-  baseline: 0.772,
-}
-```
+### Two ways a logo can be fitted
 
-### Why `xHeight` and `baseline`
-
-Logos cannot be aligned on their bounding boxes. A box contains something
-different for each file: `talksign` has both an ascender and a descender,
+Logos cannot be matched on their bounding boxes. A box holds something
+different for every file: `talksign` has an ascender *and* a descender,
 `trame` has neither, and `Blockroll` and `trame` carry marks that overshoot
 their own type. Scale those boxes to a common height and the letterforms come
 out different sizes; centre them and the baselines sit ragged.
 
-So `drawSponsorStrip` scales every logo to a common **x-height** and sits them
-on a shared **baseline**, letting descenders and overshooting marks hang below
-it. Symbols have no baseline, so `markOnly` ones are centred on the x-height
-band instead. The row is then scaled down as a whole until it fits, so a sixth
-sponsor shrinks the row rather than overflowing it.
+**`align: "baseline"`** (the default) is for a **single line of type**. The
+logo is scaled to the row's x-height and sat on a shared baseline, so
+descenders and overshooting marks hang below it:
 
-The two numbers are measured from the artwork: row ink peaks across the
-x-height band, so the rows at or above 55% of that peak isolate it, and the
-band's lower edge is the baseline. The site footer applies the same metrics in
-CSS, so it matches the generated images.
+```ts
+{ name: "Acme", url: "", logo: "/brand/sponsors/acme.png",
+  xHeight: 0.534, baseline: 0.772 }
+```
+
+Those two numbers are fractions of the file's height, measured from the
+artwork: row ink peaks across the x-height band, so the rows at or above 55%
+of that peak isolate it, and the band's lower edge is the baseline.
+
+**`align: "block"`** is for a **bare symbol** (Watchup's owl) or a **stacked
+lockup** with more than one line (PXXL App). Neither has a single baseline, so
+it is sized as a block and centred on the x-height band. `xHeight` and
+`baseline` are meaningless here \u2014 on a stack the measured band spans both
+lines \u2014 so the type does not accept them:
+
+```ts
+{ name: "PXXL App", url: "", logo: "/brand/sponsors/pxxl.png",
+  align: "block", blockScale: 2.35 }
+```
+
+`blockScale` is the block height as a multiple of the x-height, defaulting to
+`SPONSOR_BLOCK_SCALE` (1.8). A stacked lockup needs more than a symbol does,
+or each of its two lines ends up around half the size of the neighbouring
+wordmarks.
+
+`sponsorBox()` in `lib/event.config.ts` does this maths once; the canvas strip
+and the DOM footer both call it, so the site and the downloads cannot drift.
+The row is scaled down as a whole until it fits, so a seventh sponsor shrinks
+the row rather than overflowing it.
+
+`url` is optional \u2014 a sponsor without one renders as a plain logo rather
+than a dead link.
 
 ## Attending or volunteering
 
